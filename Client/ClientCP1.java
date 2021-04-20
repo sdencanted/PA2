@@ -214,7 +214,7 @@ public class ClientCP1 {
 
 					// Send the file
 					for (boolean fileEnded = false; !fileEnded;) {
-						numBytes = bufferedFileInputStream.read(fromFileBuffer);
+						numBytes = bufferedFileInputStream.read(fromFileBuffer);		
 						fileEnded = numBytes < 117;
 
 						toServer.writeInt(1);

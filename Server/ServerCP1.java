@@ -15,7 +15,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import javax.crypto.Cipher;
 import javax.sql.rowset.serial.SerialArray;
 import java.util.Arrays;
-import java.io.ByteArrayOutputStream;
 
 public class ServerCP1 {
 
@@ -63,7 +62,6 @@ public class ServerCP1 {
 			while (!connectionSocket.isClosed()) {
 
 				int packetType = fromClient.readInt();
-
 				switch (packetType) {
 				// packet for nonce and requesting for identity
 				case 0:
@@ -126,7 +124,6 @@ public class ServerCP1 {
 					
 				// packet for transferring file
 				case 2:
-					byte [] file={};
 					while (true) {
 						int packetType2 = fromClient.readInt();
 						// packet for transferring file name
@@ -143,21 +140,24 @@ public class ServerCP1 {
 						}
 						// packet for transferring a chunk of the file
 						else if (packetType2 == 1) {
-							ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 
 							numBytes = fromClient.readInt();
 							byte [] block = new byte[numBytes];
+							System.out.println("new chunk");
+							System.out.println(fromClient.available());
+							System.out.println(numBytes);
 							fromClient.readFully(block, 0, numBytes);
 
 							if (numBytes > 0)
 								bufferedFileOutputStream.write(block, 0, numBytes);
 							
-							file = new byte[file.length + block.length];
 							if (numBytes < 117) {
+
 								if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
-								if (bufferedFileOutputStream != null) fileOutputStream.close();
+								// if (bufferedFileOutputStream != null) fileOutputStream.close();
 								System.out.println("File received successfully");
-								System.out.println("File received successfully");
+								System.out.println(fromClient.available());
+								fromClient.skipBytes(fromClient.available());
 								break;
 							}
 						}
