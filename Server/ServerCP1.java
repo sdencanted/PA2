@@ -10,10 +10,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import javax.crypto.Cipher;
 import javax.sql.rowset.serial.SerialArray;
-
+import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
 
 public class ServerCP1 {
 
@@ -25,14 +27,19 @@ public class ServerCP1 {
 		String certificateName = "server_cert.crt";
 
 		PrivateKey privateKey = null;
+		// PublicKey publicKey = null;
 		Cipher encCipher = null;
+		// Cipher decCipher = null;
 		try {
 			byte[] keyBytes = Files.readAllBytes(Paths.get("private_key.der"));
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
 			KeyFactory kf = KeyFactory.getInstance("RSA");
 			privateKey = kf.generatePrivate(spec);
+			// publicKey = kf.generatePublic(spec);
 			encCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 			encCipher.init(Cipher.ENCRYPT_MODE, privateKey);
+			// decCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			// decCipher.init(Cipher.DECRYPT_MODE, publicKey);
 		} catch (Exception e) {e.printStackTrace();}
 
 		ServerSocket welcomeSocket = null;
@@ -53,7 +60,6 @@ public class ServerCP1 {
 			connectionSocket = welcomeSocket.accept();
 			fromClient = new DataInputStream(connectionSocket.getInputStream());
 			toClient = new DataOutputStream(connectionSocket.getOutputStream());
-
 			while (!connectionSocket.isClosed()) {
 
 				int packetType = fromClient.readInt();
@@ -66,14 +72,23 @@ public class ServerCP1 {
 					numBytes = fromClient.readInt();
 					byte [] nonce = new byte[numBytes];
 					fromClient.readFully(nonce, 0, numBytes);
-					System.out.println("Received nonce: " + new String(nonce));
+					// System.out.println(Arrays.toString(nonce));
+					System.out.println("Received nonce: '" + new String(nonce,0,numBytes)+"'");
 
 					// encrypt nonce with private key and send to client
 					byte[] cipheredNonce = encCipher.doFinal(nonce);
-					System.out.println("Sending encrypted nonce to client..." );
+					System.out.print("Sending encrypted nonce to client..." );
+					// System.out.println(Arrays.toString(cipheredNonce));
 					toClient.writeInt(0);
 					toClient.writeInt(cipheredNonce.length);
 					toClient.write(cipheredNonce);
+
+					//predict expected decryption
+
+					// byte[] decipheredNonce = decCipher.doFinal(cipheredNonce);
+					// System.out.print("expected decipher: " );
+					// System.out.println(decipheredNonce);
+					
 
 					break;
 
@@ -111,6 +126,7 @@ public class ServerCP1 {
 					
 				// packet for transferring file
 				case 2:
+					byte [] file={};
 					while (true) {
 						int packetType2 = fromClient.readInt();
 						// packet for transferring file name
@@ -127,16 +143,20 @@ public class ServerCP1 {
 						}
 						// packet for transferring a chunk of the file
 						else if (packetType2 == 1) {
+							ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
 							numBytes = fromClient.readInt();
 							byte [] block = new byte[numBytes];
 							fromClient.readFully(block, 0, numBytes);
 
 							if (numBytes > 0)
 								bufferedFileOutputStream.write(block, 0, numBytes);
-
+							
+							file = new byte[file.length + block.length];
 							if (numBytes < 117) {
 								if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
 								if (bufferedFileOutputStream != null) fileOutputStream.close();
+								System.out.println("File received successfully");
 								System.out.println("File received successfully");
 								break;
 							}

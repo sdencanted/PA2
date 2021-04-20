@@ -13,6 +13,7 @@ import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
+import java.util.Arrays;
 
 public class ClientCP1 {
 
@@ -68,7 +69,8 @@ public class ClientCP1 {
 			byte[] nonce = generateNonce();
 			toServer.writeInt(nonce.length);
 			toServer.write(nonce);
-			System.out.println("Sent nonce: " + new String(nonce, 0, nonce.length));
+			System.out.println("Sent nonce:'" + new String(nonce, 0, nonce.length) + "'");
+			// System.out.println(Arrays.toString(nonce));
 
 			// wait for encrypted nonce
 			while (true) {
@@ -157,13 +159,13 @@ public class ClientCP1 {
 
             byte[] decryptedNonce = decCipher.doFinal(encryptedNonce);
 			
-			if (decryptedNonce.equals(nonce)) {
+			if (new String(decryptedNonce).equals(new String(nonce))) {
                 System.out.println("Authentication success!");
             }
 			else {
                 System.err.println("Authentification fail!");
-                System.err.println(nonce);
-                System.err.println(decryptedNonce);
+                System.err.println(Arrays.toString(nonce));
+                System.err.println(Arrays.toString(decryptedNonce));
 
                 toServer.close();
                 fromServer.close();
