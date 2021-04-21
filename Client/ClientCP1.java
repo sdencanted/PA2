@@ -14,6 +14,8 @@ import java.util.Scanner;
 
 import javax.crypto.Cipher;
 import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 public class ClientCP1 {
 
@@ -216,44 +218,65 @@ public class ClientCP1 {
 					toServer.write(cipheredCmd);
 
 					// Send the filename
-					cipheredCmd = encCipher.doFinal("0".getBytes());
-					// System.out.println(cipheredCmd.length);
-					toServer.write(cipheredCmd);
 					
-					byte[] encNumBytes = encCipher.doFinal(String.valueOf(filename.getBytes().length).getBytes());
-					// toServer.writeInt(filename.getBytes().length);
-					toServer.write(encNumBytes);
+					InputStream is = new ByteArrayInputStream(filename.getBytes());
+
+					byte[] filenameChunk= new byte[117];
+					for (boolean fileNameEnded = false; !fileNameEnded;) {
+						cipheredCmd = encCipher.doFinal("0".getBytes());
+						// System.out.println(cipheredCmd.length);
+						toServer.write(cipheredCmd);
+						numBytes=is.available();
+						// if(numBytes>117) numBytes=117;
+						if(numBytes >117)
+							is.read(filenameChunk,0,117);
+						else
+							is.read(filenameChunk,0,numBytes);
+						fileNameEnded = numBytes <= 117;
+
+						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+
+
+						// toServer.writeInt(filename.getBytes().length);
+
+						toServer.write(encNumBytes);
 
 
 
-					// toServer.write(filename.getBytes());
-					byte[] cipheredFile = encCipher.doFinal(filename.getBytes());
+						// toServer.write(filename.getBytes());
+						byte[] cipheredFile = encCipher.doFinal(filenameChunk);
 
-					byte[] cipheredFilelength= encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFilelength= encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						System.out.println("pootis");
+						System.out.println(cipheredFilelength);
+						toServer.write(cipheredFilelength);
 
-					toServer.write(cipheredFilelength);
-
-					toServer.write(cipheredFile);
-
+						toServer.write(cipheredFile);
+						toServer.flush();
+					}
 					byte [] fromFileBuffer = new byte[117];
 
 					// Send the file
 					for (boolean fileEnded = false; !fileEnded;) {
-						numBytes = bufferedFileInputStream.read(fromFileBuffer);		
-						fileEnded = numBytes < 117;
+						numBytes =  bufferedFileInputStream.available();
+						if(numBytes>117)
+							bufferedFileInputStream.read(fromFileBuffer,0,117);
+						else
+							bufferedFileInputStream.read(fromFileBuffer,0,numBytes);		
+						fileEnded = numBytes <= 117;
 
 						// toServer.writeInt(1);
 						cipheredCmd = encCipher.doFinal("1".getBytes());
 						toServer.write(cipheredCmd);
 
 						// toServer.writeInt(numBytes);
-						encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
 						toServer.write(encNumBytes);
 						
 
 						// toServer.write(fromFileBuffer);
-						cipheredFile=encCipher.doFinal(fromFileBuffer);
-						cipheredFilelength=encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFile=encCipher.doFinal(fromFileBuffer);
+						byte[] cipheredFilelength=encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
 						toServer.write(cipheredFilelength);
 						toServer.write(cipheredFile);
 
