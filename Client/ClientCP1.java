@@ -33,11 +33,13 @@ public class ClientCP1 {
 
 		String filename = null;
 
-    	String serverAddress = "localhost";
-    	if (args.length > 1) serverAddress = args[0];
+		String serverAddress = "localhost";
+		if (args.length > 1)
+			serverAddress = args[0];
 
-    	int port = 4321;
-    	if (args.length > 2) port = Integer.parseInt(args[1]);
+		int port = 4321;
+		if (args.length > 2)
+			port = Integer.parseInt(args[1]);
 
 		int numBytes = 0;
 		byte[] encryptedNonce = null;
@@ -45,11 +47,11 @@ public class ClientCP1 {
 
 		Socket clientSocket = null;
 
-        DataOutputStream toServer = null;
-        DataInputStream fromServer = null;
+		DataOutputStream toServer = null;
+		DataInputStream fromServer = null;
 
-    	FileInputStream fileInputStream = null;
-        BufferedInputStream bufferedFileInputStream = null;
+		FileInputStream fileInputStream = null;
+		BufferedInputStream bufferedFileInputStream = null;
 
 		FileOutputStream fileOutputStream = null;
 		BufferedOutputStream bufferedFileOutputStream = null;
@@ -104,7 +106,7 @@ public class ClientCP1 {
 					byte[] certName = new byte[numBytes];
 					fromServer.readFully(certName, 0, numBytes);
 
-					certFileName = "recv_"+new String(certName, 0, numBytes);
+					certFileName = "recv_" + new String(certName, 0, numBytes);
 
 					fileOutputStream = new FileOutputStream(certFileName);
 					bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -114,7 +116,7 @@ public class ClientCP1 {
 
 					numBytes = fromServer.readInt();
 
-					byte [] block = new byte[numBytes];
+					byte[] block = new byte[numBytes];
 					fromServer.readFully(block, 0, numBytes);
 					// System.out.println("numBytes");
 					// System.out.println(numBytes);
@@ -123,8 +125,10 @@ public class ClientCP1 {
 						bufferedFileOutputStream.write(block, 0, numBytes);
 
 					if (numBytes < 117) {
-						if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
-						if (bufferedFileOutputStream != null) fileOutputStream.close();
+						if (bufferedFileOutputStream != null)
+							bufferedFileOutputStream.close();
+						if (bufferedFileOutputStream != null)
+							fileOutputStream.close();
 						System.out.println("Certificate file received successfully");
 						break;
 					}
@@ -136,20 +140,20 @@ public class ClientCP1 {
 
 			InputStream fis = new FileInputStream("cacsertificate.crt");
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			X509Certificate CAcert =(X509Certificate)cf.generateCertificate(fis);
+			X509Certificate CAcert = (X509Certificate) cf.generateCertificate(fis);
 			PublicKey CAkey = CAcert.getPublicKey();
 
 			InputStream fis2 = new FileInputStream(certFileName);
-			X509Certificate serverCert =(X509Certificate)cf.generateCertificate(fis2);
-			
+			X509Certificate serverCert = (X509Certificate) cf.generateCertificate(fis2);
+
 			try {
-                serverCert.checkValidity();
+				serverCert.checkValidity();
 				serverCert.verify(CAkey);
-                System.out.println("Certificate verification success!");
-            } catch (Exception e) {
-                System.out.println("Certificate verification fail!");
+				System.out.println("Certificate verification success!");
+			} catch (Exception e) {
+				System.out.println("Certificate verification fail!");
 				return;
-            }
+			}
 
 			PublicKey serverPublicKey = serverCert.getPublicKey();
 
@@ -157,37 +161,36 @@ public class ClientCP1 {
 			System.out.println("Verifying nonce...");
 
 			Cipher decCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            decCipher.init(Cipher.DECRYPT_MODE, serverPublicKey);
+			decCipher.init(Cipher.DECRYPT_MODE, serverPublicKey);
 
-            byte[] decryptedNonce = decCipher.doFinal(encryptedNonce);
-			
+			byte[] decryptedNonce = decCipher.doFinal(encryptedNonce);
+
 			if (new String(decryptedNonce).equals(new String(nonce))) {
-                System.out.println("Authentication success!");
-            }
-			else {
-                System.err.println("Authentification fail!");
-                // System.err.println(Arrays.toString(nonce));
-                // System.err.println(Arrays.toString(decryptedNonce));
+				System.out.println("Authentication success!");
+			} else {
+				System.err.println("Authentification fail!");
+				// System.err.println(Arrays.toString(nonce));
+				// System.err.println(Arrays.toString(decryptedNonce));
 
-                toServer.close();
-                fromServer.close();
-                clientSocket.close();
+				toServer.close();
+				fromServer.close();
+				clientSocket.close();
 				return;
-            }
+			}
 
 			System.out.println("Ready to send file...");
 
 			// Loop and wait for user to input file names
 			while (true) {
-				//file encoder
+				// file encoder
 				Cipher encCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 				encCipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
 				System.out.println("Enter file name to upload, or enter 'quit' to quit:");
 				Scanner scanner = new Scanner(System.in);
-				
+
 				while (true) {
 					if (scanner.hasNextLine()) {
-                        filename = scanner.nextLine();
+						filename = scanner.nextLine();
 						break;
 					}
 				}
@@ -204,7 +207,7 @@ public class ClientCP1 {
 					scanner.close();
 					break;
 				}
-				
+
 				try {
 					timeStarted = System.nanoTime();
 					// Open the file
@@ -218,35 +221,32 @@ public class ClientCP1 {
 					toServer.write(cipheredCmd);
 
 					// Send the filename
-					
+
 					InputStream is = new ByteArrayInputStream(filename.getBytes());
 
-					byte[] filenameChunk= new byte[117];
+					byte[] filenameChunk = new byte[117];
 					for (boolean fileNameEnded = false; !fileNameEnded;) {
 						cipheredCmd = encCipher.doFinal("0".getBytes());
 						// System.out.println(cipheredCmd.length);
 						toServer.write(cipheredCmd);
-						numBytes=is.available();
+						numBytes = is.available();
 						// if(numBytes>117) numBytes=117;
-						if(numBytes >117)
-							is.read(filenameChunk,0,117);
+						if (numBytes > 117)
+							is.read(filenameChunk, 0, 117);
 						else
-							is.read(filenameChunk,0,numBytes);
+							is.read(filenameChunk, 0, numBytes);
 						fileNameEnded = numBytes <= 117;
 
 						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
-
 
 						// toServer.writeInt(filename.getBytes().length);
 
 						toServer.write(encNumBytes);
 
-
-
 						// toServer.write(filename.getBytes());
 						byte[] cipheredFile = encCipher.doFinal(filenameChunk);
 
-						byte[] cipheredFilelength= encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFilelength = encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
 						// System.out.println("pootis");
 						// System.out.println(cipheredFilelength);
 						toServer.write(cipheredFilelength);
@@ -254,15 +254,15 @@ public class ClientCP1 {
 						toServer.write(cipheredFile);
 						toServer.flush();
 					}
-					byte [] fromFileBuffer = new byte[117];
+					byte[] fromFileBuffer = new byte[117];
 
 					// Send the file
 					for (boolean fileEnded = false; !fileEnded;) {
-						numBytes =  bufferedFileInputStream.available();
-						if(numBytes>117)
-							bufferedFileInputStream.read(fromFileBuffer,0,117);
+						numBytes = bufferedFileInputStream.available();
+						if (numBytes > 117)
+							bufferedFileInputStream.read(fromFileBuffer, 0, 117);
 						else
-							bufferedFileInputStream.read(fromFileBuffer,0,numBytes);		
+							bufferedFileInputStream.read(fromFileBuffer, 0, numBytes);
 						fileEnded = numBytes <= 117;
 
 						// toServer.writeInt(1);
@@ -272,11 +272,10 @@ public class ClientCP1 {
 						// toServer.writeInt(numBytes);
 						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
 						toServer.write(encNumBytes);
-						
 
 						// toServer.write(fromFileBuffer);
-						byte[] cipheredFile=encCipher.doFinal(fromFileBuffer);
-						byte[] cipheredFilelength=encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFile = encCipher.doFinal(fromFileBuffer);
+						byte[] cipheredFilelength = encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
 						toServer.write(cipheredFilelength);
 						toServer.write(cipheredFile);
 
@@ -284,17 +283,19 @@ public class ClientCP1 {
 					}
 
 					bufferedFileInputStream.close();
-	        		fileInputStream.close();
+					fileInputStream.close();
 
 					System.out.println("Successfully sent file: " + filename);
 					long timeTaken = System.nanoTime() - timeStarted;
-					System.out.println("File took: " + timeTaken/1000000.0 + "ms to send");
+					System.out.println("File took: " + timeTaken / 1000000.0 + "ms to send");
 
 				} catch (Exception e) {
-                    System.out.println("Invalid file name");
-                    System.out.println(e);
+					System.out.println("Invalid file name");
+					System.out.println(e);
 				}
 			}
-		} catch (Exception e) {e.printStackTrace();}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
