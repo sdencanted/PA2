@@ -62,7 +62,7 @@ public class ServerCP2 {
 
 		int numBytes = 0;
 		boolean startDecrypt= false;
-
+		int totalFilenameBytes=0;
 		try {
 			welcomeSocket = new ServerSocket(port);
 			connectionSocket = welcomeSocket.accept();
@@ -190,15 +190,15 @@ public class ServerCP2 {
 								fromClient.readFully(encfilename, 0, cipheredFilelength);
 								
 								tempfilename = symCipher.doFinal(encfilename);
-
+								totalFilenameBytes+=numBytes;
 								if (numBytes > 0)
 									if (numBytes>128){
-										filenameOutputStream.write(tempfilename,0,117);
-										System.out.println(new String(tempfilename,0,128));
+										filenameOutputStream.write(tempfilename,0,128);
+										// System.out.println(new String(tempfilename,0,128));
 									}
 									else{
 										filenameOutputStream.write(tempfilename,0,numBytes);
-										System.out.println(new String(tempfilename,0,numBytes));
+										// System.out.println(new String(tempfilename,0,numBytes));
 									}
 								if (numBytes <= 128) {
 									filename= filenameOutputStream.toByteArray();
@@ -212,8 +212,9 @@ public class ServerCP2 {
 									// fromClient.readFully(filename, 0, numBytes);
 		
 									System.out.println("Received filename:" + new String(filename));
-									fileOutputStream = new FileOutputStream("recv_" + new String(filename, 0, numBytes));
+									fileOutputStream = new FileOutputStream("recv_" + new String(filename, 0, Math.min(totalFilenameBytes,250)));
 									bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
+									totalFilenameBytes=0;
 								}
 							}
 							// packet for transferring a chunk of the file
@@ -236,19 +237,19 @@ public class ServerCP2 {
 								fromClient.readFully(encblock, 0, cipheredFilelength);
 
 								byte [] block = symCipher.doFinal(encblock);
-								System.out.println(numBytes);
+								// System.out.println(numBytes);
 	
 								if (numBytes > 0)
 									if (numBytes >128){
 										bufferedFileOutputStream.write(block, 0, 128);
-										System.out.println(new String(block, 0, 128));
+										// System.out.println(new String(block, 0, 128));
 									}
 									else{
 										bufferedFileOutputStream.write(block, 0, numBytes);
-										System.out.println(new String(block, 0, numBytes));
+										// System.out.println(new String(block, 0, numBytes));
 									}
 								
-								if (numBytes <= 117) {
+								if (numBytes <= 128) {
 	
 									if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
 									if (bufferedFileOutputStream != null) fileOutputStream.close();
