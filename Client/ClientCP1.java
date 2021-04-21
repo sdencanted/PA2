@@ -193,7 +193,9 @@ public class ClientCP1 {
 				// Quiting the session
 				if (filename.equals("quit")) {
 					System.out.println("Closing connection...");
-					toServer.writeInt(3);
+					byte[] cipheredCmd = encCipher.doFinal("3".getBytes());
+					toServer.write(cipheredCmd);
+
 					toServer.close();
 					fromServer.close();
 					clientSocket.close();
@@ -218,9 +220,9 @@ public class ClientCP1 {
 					// System.out.println(cipheredCmd.length);
 					toServer.write(cipheredCmd);
 					
-					cipheredCmd = encCipher.doFinal(String.valueOf(filename.getBytes().length).getBytes());
+					byte[] encNumBytes = encCipher.doFinal(String.valueOf(filename.getBytes().length).getBytes());
 					// toServer.writeInt(filename.getBytes().length);
-					toServer.write(cipheredCmd);
+					toServer.write(encNumBytes);
 
 
 
@@ -245,8 +247,8 @@ public class ClientCP1 {
 						toServer.write(cipheredCmd);
 
 						// toServer.writeInt(numBytes);
-						cipheredCmd = encCipher.doFinal(String.valueOf(numBytes).getBytes());
-						toServer.write(cipheredCmd);
+						encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+						toServer.write(encNumBytes);
 						
 
 						// toServer.write(fromFileBuffer);

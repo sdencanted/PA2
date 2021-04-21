@@ -143,9 +143,9 @@ public class ServerCP1 {
 		
 									numBytes = fromClient.readInt();
 									byte [] block = new byte[numBytes];
-									System.out.println("new chunk");
-									System.out.println(fromClient.available());
-									System.out.println(numBytes);
+									// System.out.println("new chunk");
+									// System.out.println(fromClient.available());
+									// System.out.println(numBytes);
 									fromClient.readFully(block, 0, numBytes);
 		
 									if (numBytes > 0)
@@ -245,9 +245,9 @@ public class ServerCP1 {
 									byte [] encblock = new byte[cipheredFilelength];
 
 
-									System.out.println("new chunk");
-									System.out.println(fromClient.available());
-									System.out.println(numBytes);
+									// System.out.println("new chunk");
+									// System.out.println(fromClient.available());
+									// System.out.println(numBytes);
 									fromClient.readFully(encblock, 0, cipheredFilelength);
 
 
