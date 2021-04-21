@@ -15,6 +15,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import javax.crypto.Cipher;
 import javax.sql.rowset.serial.SerialArray;
 import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 public class ServerCP1 {
 
@@ -51,7 +53,9 @@ public class ServerCP1 {
 
 		FileOutputStream fileOutputStream = null;
 		BufferedOutputStream bufferedFileOutputStream = null;
-
+		
+		ByteArrayOutputStream FilenameOutputStream = new ByteArrayOutputStream();
+		
 		int numBytes = 0;
 		boolean startDecrypt= false;
 		try {
@@ -156,8 +160,8 @@ public class ServerCP1 {
 										if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
 										if (bufferedFileOutputStream != null) fileOutputStream.close();
 										System.out.println("File received successfully");
-										System.out.println(fromClient.available());
-										fromClient.skipBytes(fromClient.available());
+										// System.out.println(fromClient.available());
+										// fromClient.skipBytes(fromClient.available());
 										break;
 									}
 								}
@@ -186,7 +190,8 @@ public class ServerCP1 {
 
 
 					byte[] encpacket= new byte[128];
-
+					byte[] filename=null;
+					byte [] tempfilename=null;
 					switch (packetType) {
 						// packet for nonce and requesting for identity
 						
@@ -209,26 +214,39 @@ public class ServerCP1 {
 									fromClient.read(encpacket);
 									decpacket=  decCipher.doFinal(encpacket);
 									int cipheredFilelength=Integer.parseInt(new String(decpacket));
-
+									System.out.println("pootis");
+									System.out.println(cipheredFilelength);
 
 									byte [] encfilename = new byte[cipheredFilelength];
 									
 									fromClient.readFully(encfilename, 0, cipheredFilelength);
 									
-									byte [] filename = decCipher.doFinal(encfilename);
-									// Must use read fully!
-									// See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
+									tempfilename = decCipher.doFinal(encfilename);
+									if (numBytes > 0)
+										if (numBytes>117)
+											FilenameOutputStream.write(tempfilename,0,117);
+										else
+											FilenameOutputStream.write(tempfilename,0,numBytes);
+									if (numBytes <= 117) {
+										filename= FilenameOutputStream.toByteArray();
+										if (FilenameOutputStream != null) FilenameOutputStream.close();
+										// System.out.println("File name");
+
+										FilenameOutputStream = new ByteArrayOutputStream();
+										// fromClient.read(encpacket);
+										// decpacket=  decCipher.doFinal(encpacket);
+										// filename=new String(decpacket);
+										// fromClient.readFully(filename, 0, numBytes);
+			
+										System.out.println("Received filename:" + new String(filename));
+										fileOutputStream = new FileOutputStream("recv_" + new String(filename, 0, numBytes));
+										bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
+									}
+									
 
 
 
-									// fromClient.read(encpacket);
-									// decpacket=  decCipher.doFinal(encpacket);
-									// filename=new String(decpacket);
-									// fromClient.readFully(filename, 0, numBytes);
-		
-									fileOutputStream = new FileOutputStream("recv_" + new String(filename, 0, numBytes));
-									bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
-									System.out.println("Received filename:" + new String(filename, 0, numBytes));
+									
 								}
 								// packet for transferring a chunk of the file
 								else if (packetType2 == 1) {
@@ -254,9 +272,12 @@ public class ServerCP1 {
 									byte [] block = decCipher.doFinal(encblock);
 		
 									if (numBytes > 0)
-										bufferedFileOutputStream.write(block, 0, numBytes);
+										if (numBytes >117)
+											bufferedFileOutputStream.write(block, 0, 117);
+										else
+											bufferedFileOutputStream.write(block, 0, numBytes);
 									
-									if (numBytes < 117) {
+									if (numBytes <= 117) {
 		
 										if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
 										if (bufferedFileOutputStream != null) fileOutputStream.close();
