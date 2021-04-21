@@ -88,7 +88,7 @@ public class ClientCP1 {
 
 			// Send request for certificate
 			System.out.println("Requesting for certificate...");
-			System.out.println(fromServer.available());
+			// System.out.println(fromServer.available());
 			toServer.writeInt(1);
 
 			// wait for certificate
@@ -96,7 +96,7 @@ public class ClientCP1 {
 
 				// int packetType = fromServer.readInt();
 				int packetType = fromServer.readInt();
-				System.out.println(packetType);
+				// System.out.println(packetType);
 				// Receiving certificate file name
 				if (packetType == 1) {
 					System.out.println("Receiving certificate file ...");
@@ -116,8 +116,8 @@ public class ClientCP1 {
 
 					byte [] block = new byte[numBytes];
 					fromServer.readFully(block, 0, numBytes);
-					System.out.println("numBytes");
-					System.out.println(numBytes);
+					// System.out.println("numBytes");
+					// System.out.println(numBytes);
 
 					if (numBytes > 0)
 						bufferedFileOutputStream.write(block, 0, numBytes);
@@ -166,8 +166,8 @@ public class ClientCP1 {
             }
 			else {
                 System.err.println("Authentification fail!");
-                System.err.println(Arrays.toString(nonce));
-                System.err.println(Arrays.toString(decryptedNonce));
+                // System.err.println(Arrays.toString(nonce));
+                // System.err.println(Arrays.toString(decryptedNonce));
 
                 toServer.close();
                 fromServer.close();
@@ -213,7 +213,7 @@ public class ClientCP1 {
 					// toServer.writeInt(2);
 
 					byte[] cipheredCmd = encCipher.doFinal("2".getBytes());
-					System.out.println(cipheredCmd.length);
+					// System.out.println(cipheredCmd.length);
 					// System.out.println("Pootis");
 					toServer.write(cipheredCmd);
 
@@ -247,8 +247,8 @@ public class ClientCP1 {
 						byte[] cipheredFile = encCipher.doFinal(filenameChunk);
 
 						byte[] cipheredFilelength= encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
-						System.out.println("pootis");
-						System.out.println(cipheredFilelength);
+						// System.out.println("pootis");
+						// System.out.println(cipheredFilelength);
 						toServer.write(cipheredFilelength);
 
 						toServer.write(cipheredFile);

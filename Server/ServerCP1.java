@@ -214,8 +214,8 @@ public class ServerCP1 {
 									fromClient.read(encpacket);
 									decpacket=  decCipher.doFinal(encpacket);
 									int cipheredFilelength=Integer.parseInt(new String(decpacket));
-									System.out.println("pootis");
-									System.out.println(cipheredFilelength);
+									// System.out.println("pootis");
+									// System.out.println(cipheredFilelength);
 
 									byte [] encfilename = new byte[cipheredFilelength];
 									
