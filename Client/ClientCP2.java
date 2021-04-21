@@ -1,5 +1,6 @@
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
@@ -13,11 +14,12 @@ import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
-import java.util.Arrays;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
-public class ClientCP1 {
+import java.util.Arrays;
+
+public class ClientCP2 {
 
 	public static byte[] generateNonce() {
 		SecureRandom secureRandom = new SecureRandom();
@@ -89,7 +91,7 @@ public class ClientCP1 {
 			}
 
 			// Send request for certificate
-			System.out.println("Requesting for certificate...");
+			System.out.println("Requesting for certificate... Spencer");
 			// System.out.println(fromServer.available());
 			toServer.writeInt(1);
 
@@ -178,13 +180,30 @@ public class ClientCP1 {
 				return;
 			}
 
+			// generate session key
+			KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+			keyGen.init(128);
+			SecretKey sessionKey = keyGen.generateKey();
+
+			// Create symmetric session key Cipher object
+			Cipher symCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			symCipher.init(Cipher.ENCRYPT_MODE, sessionKey);
+
+			// encode session key with server public key
+			Cipher encCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			encCipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
+			byte[] encryptedSessionKey = encCipher.doFinal(sessionKey.getEncoded());
+
+			System.out.println("Generated symmetric session key, sending...");
+
+			toServer.writeInt(2);
+			toServer.writeInt(encryptedSessionKey.length);
+			toServer.write(encryptedSessionKey);
+
 			System.out.println("Ready to send file...");
 
 			// Loop and wait for user to input file names
 			while (true) {
-				// file encoder
-				Cipher encCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-				encCipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
 				System.out.println("Enter file name to upload, or enter 'quit' to quit:");
 				Scanner scanner = new Scanner(System.in);
 
@@ -198,7 +217,7 @@ public class ClientCP1 {
 				// Quiting the session
 				if (filename.equals("quit")) {
 					System.out.println("Closing connection...");
-					byte[] cipheredCmd = encCipher.doFinal("3".getBytes());
+					byte[] cipheredCmd = symCipher.doFinal("4".getBytes());
 					toServer.write(cipheredCmd);
 
 					toServer.close();
@@ -213,69 +232,70 @@ public class ClientCP1 {
 					// Open the file
 					fileInputStream = new FileInputStream(filename);
 					bufferedFileInputStream = new BufferedInputStream(fileInputStream);
-					// toServer.writeInt(2);
-
-					byte[] cipheredCmd = encCipher.doFinal("2".getBytes());
+					byte[] cipheredCmd = symCipher.doFinal("3".getBytes());
 					// System.out.println(cipheredCmd.length);
-					// System.out.println("Pootis");
+					// System.out.println(cipheredCmd);
+
+					// Encrypt the filename
 					toServer.write(cipheredCmd);
 
 					// Send the filename
-
 					InputStream is = new ByteArrayInputStream(filename.getBytes());
 
-					byte[] filenameChunk = new byte[117];
+					byte[] filenameChunk = new byte[128];
 					for (boolean fileNameEnded = false; !fileNameEnded;) {
-						cipheredCmd = encCipher.doFinal("0".getBytes());
+						cipheredCmd = symCipher.doFinal("0".getBytes());
 						// System.out.println(cipheredCmd.length);
 						toServer.write(cipheredCmd);
 						numBytes = is.available();
-						// if(numBytes>117) numBytes=117;
-						if (numBytes > 117)
-							is.read(filenameChunk, 0, 117);
+						// if(numBytes > 128) numBytes = 128;
+						if (numBytes > 128)
+							is.read(filenameChunk, 0, 128);
 						else
 							is.read(filenameChunk, 0, numBytes);
-						fileNameEnded = numBytes <= 117;
+						fileNameEnded = numBytes <= 128;
 
-						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+						byte[] encNumBytes = symCipher.doFinal(String.format("%03d", numBytes).getBytes());
 
 						// toServer.writeInt(filename.getBytes().length);
 
 						toServer.write(encNumBytes);
 
 						// toServer.write(filename.getBytes());
-						byte[] cipheredFile = encCipher.doFinal(filenameChunk);
+						byte[] cipheredFile = symCipher.doFinal(filenameChunk);
 
-						byte[] cipheredFilelength = encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFilelength = symCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
 						// System.out.println("pootis");
-						// System.out.println(cipheredFilelength);
+						// System.out.println(cipheredFilelength.length);
+
+
 						toServer.write(cipheredFilelength);
 
 						toServer.write(cipheredFile);
 						toServer.flush();
 					}
-					byte[] fromFileBuffer = new byte[117];
+					byte[] fromFileBuffer = new byte[128];
 
 					// Send the file
 					for (boolean fileEnded = false; !fileEnded;) {
 						numBytes = bufferedFileInputStream.available();
-						if (numBytes > 117)
-							bufferedFileInputStream.read(fromFileBuffer, 0, 117);
+						if (numBytes > 128)
+							bufferedFileInputStream.read(fromFileBuffer, 0, 128);
 						else
 							bufferedFileInputStream.read(fromFileBuffer, 0, numBytes);
-						fileEnded = numBytes <= 117;
+						fileEnded = numBytes <= 128;
 
 						// toServer.writeInt(1);
-						cipheredCmd = encCipher.doFinal("1".getBytes());
+						cipheredCmd = symCipher.doFinal("1".getBytes());
 						toServer.write(cipheredCmd);
 
 						// toServer.writeInt(numBytes);
-						byte[] encNumBytes = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+						byte[] encNumBytes = symCipher.doFinal(String.valueOf(numBytes).getBytes());
 						toServer.write(encNumBytes);
 
 						// toServer.write(fromFileBuffer);
-						byte[] cipheredFile = encCipher.doFinal(fromFileBuffer);
-						byte[] cipheredFilelength = encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						byte[] cipheredFile = symCipher.doFinal(fromFileBuffer);
+						byte[] cipheredFilelength = symCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
 						toServer.write(cipheredFilelength);
 						toServer.write(cipheredFile);
 
