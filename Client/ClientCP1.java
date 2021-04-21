@@ -269,6 +269,7 @@ public class ClientCP1 {
 
 				} catch (Exception e) {
                     System.out.println("Invalid file name");
+                    System.out.println(e);
 				}
 			}
 		} catch (Exception e) {e.printStackTrace();}

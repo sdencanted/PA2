@@ -261,8 +261,8 @@ public class ServerCP1 {
 										if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
 										if (bufferedFileOutputStream != null) fileOutputStream.close();
 										System.out.println("File received successfully");
-										System.out.println(fromClient.available());
-										fromClient.skipBytes(fromClient.available());
+										// System.out.println(fromClient.available());
+										// fromClient.skipBytes(fromClient.available());
 										break;
 									}
 								}
