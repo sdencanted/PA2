@@ -153,15 +153,17 @@ public class ServerCP2 {
 					}
 				}
 				else{
-					byte[] encpacketType= new byte[144];
+					byte[] encpacketType= new byte[16];
 					fromClient.read(encpacketType);
 					System.out.println(encpacketType);
 					byte[] decpacketType = symCipher.doFinal(encpacketType);
+
 					int packetType= Integer.parseInt(new String(decpacketType));
 					// System.out.println(packetType);
 
 
-					byte[] encpacket= new byte[144];
+					byte[] encpacket= new byte[16];
+					byte[] encpacketPad = new byte[48];
 					byte[] filename=null;
 					byte [] tempfilename=null;
 					switch (packetType) {
@@ -170,6 +172,7 @@ public class ServerCP2 {
 					case 3:
 						while (true) {
 							fromClient.read(encpacket);
+							// System.out.println("pootis");
 							byte[] decpacket=  symCipher.doFinal(encpacket);
 							int packetType2 = Integer.parseInt(new String(decpacket));
 

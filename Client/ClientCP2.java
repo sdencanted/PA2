@@ -255,7 +255,7 @@ public class ClientCP2 {
 							is.read(filenameChunk, 0, numBytes);
 						fileNameEnded = numBytes <= 128;
 
-						byte[] encNumBytes = symCipher.doFinal(String.valueOf(numBytes).getBytes());
+						byte[] encNumBytes = symCipher.doFinal(String.format("%03d", numBytes).getBytes());
 
 						// toServer.writeInt(filename.getBytes().length);
 
@@ -265,8 +265,10 @@ public class ClientCP2 {
 						byte[] cipheredFile = symCipher.doFinal(filenameChunk);
 
 						byte[] cipheredFilelength = symCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
-						// System.out.println("pootis");
-						// System.out.println(cipheredFilelength);
+						System.out.println("pootis");
+						System.out.println(cipheredFilelength.length);
+
+
 						toServer.write(cipheredFilelength);
 
 						toServer.write(cipheredFile);
