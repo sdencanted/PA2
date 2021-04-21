@@ -85,7 +85,7 @@ public class ClientCP1 {
 			}
 
 			// Send request for certificate
-			System.out.println("Requesting for certificate... Spencer");
+			System.out.println("Requesting for certificate...");
 			System.out.println(fromServer.available());
 			toServer.writeInt(1);
 
@@ -177,6 +177,9 @@ public class ClientCP1 {
 
 			// Loop and wait for user to input file names
 			while (true) {
+				//file encoder
+				Cipher encCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+				encCipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
 				System.out.println("Enter file name to upload, or enter 'quit' to quit:");
 				Scanner scanner = new Scanner(System.in);
 				
@@ -203,12 +206,32 @@ public class ClientCP1 {
 					// Open the file
 					fileInputStream = new FileInputStream(filename);
 					bufferedFileInputStream = new BufferedInputStream(fileInputStream);
-					toServer.writeInt(2);
+					// toServer.writeInt(2);
+
+					byte[] cipheredCmd = encCipher.doFinal("2".getBytes());
+					System.out.println(cipheredCmd.length);
+					// System.out.println("Pootis");
+					toServer.write(cipheredCmd);
 
 					// Send the filename
-					toServer.writeInt(0);
-					toServer.writeInt(filename.getBytes().length);
-					toServer.write(filename.getBytes());
+					cipheredCmd = encCipher.doFinal("0".getBytes());
+					// System.out.println(cipheredCmd.length);
+					toServer.write(cipheredCmd);
+					
+					cipheredCmd = encCipher.doFinal(String.valueOf(filename.getBytes().length).getBytes());
+					// toServer.writeInt(filename.getBytes().length);
+					toServer.write(cipheredCmd);
+
+
+
+					// toServer.write(filename.getBytes());
+					byte[] cipheredFile = encCipher.doFinal(filename.getBytes());
+
+					byte[] cipheredFilelength= encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+
+					toServer.write(cipheredFilelength);
+
+					toServer.write(cipheredFile);
 
 					byte [] fromFileBuffer = new byte[117];
 
@@ -217,9 +240,21 @@ public class ClientCP1 {
 						numBytes = bufferedFileInputStream.read(fromFileBuffer);		
 						fileEnded = numBytes < 117;
 
-						toServer.writeInt(1);
-						toServer.writeInt(numBytes);
-						toServer.write(fromFileBuffer);
+						// toServer.writeInt(1);
+						cipheredCmd = encCipher.doFinal("1".getBytes());
+						toServer.write(cipheredCmd);
+
+						// toServer.writeInt(numBytes);
+						cipheredCmd = encCipher.doFinal(String.valueOf(numBytes).getBytes());
+						toServer.write(cipheredCmd);
+						
+
+						// toServer.write(fromFileBuffer);
+						cipheredFile=encCipher.doFinal(fromFileBuffer);
+						cipheredFilelength=encCipher.doFinal(String.valueOf(cipheredFile.length).getBytes());
+						toServer.write(cipheredFilelength);
+						toServer.write(cipheredFile);
+
 						toServer.flush();
 					}
 
