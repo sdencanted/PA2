@@ -163,7 +163,7 @@ public class ServerCP2 {
 
 
 					byte[] encpacket= new byte[16];
-					byte[] encpacketPad = new byte[48];
+					byte[] encpacketPad = new byte[16];
 					byte[] filename=null;
 					byte [] tempfilename=null;
 					switch (packetType) {
@@ -172,7 +172,6 @@ public class ServerCP2 {
 					case 3:
 						while (true) {
 							fromClient.read(encpacket);
-							// System.out.println("pootis");
 							byte[] decpacket=  symCipher.doFinal(encpacket);
 							int packetType2 = Integer.parseInt(new String(decpacket));
 
@@ -191,12 +190,17 @@ public class ServerCP2 {
 								fromClient.readFully(encfilename, 0, cipheredFilelength);
 								
 								tempfilename = symCipher.doFinal(encfilename);
+
 								if (numBytes > 0)
-									if (numBytes>117)
+									if (numBytes>128){
 										filenameOutputStream.write(tempfilename,0,117);
-									else
+										System.out.println(new String(tempfilename,0,128));
+									}
+									else{
 										filenameOutputStream.write(tempfilename,0,numBytes);
-								if (numBytes <= 117) {
+										System.out.println(new String(tempfilename,0,numBytes));
+									}
+								if (numBytes <= 128) {
 									filename= filenameOutputStream.toByteArray();
 									if (filenameOutputStream != null) filenameOutputStream.close();
 									// System.out.println("File name");
