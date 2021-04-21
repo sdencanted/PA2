@@ -155,7 +155,7 @@ public class ServerCP2 {
 				else{
 					byte[] encpacketType= new byte[16];
 					fromClient.read(encpacketType);
-					System.out.println(encpacketType);
+					// System.out.println(encpacketType);
 					byte[] decpacketType = symCipher.doFinal(encpacketType);
 
 					int packetType= Integer.parseInt(new String(decpacketType));
