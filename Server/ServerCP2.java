@@ -236,12 +236,17 @@ public class ServerCP2 {
 								fromClient.readFully(encblock, 0, cipheredFilelength);
 
 								byte [] block = symCipher.doFinal(encblock);
+								System.out.println(numBytes);
 	
 								if (numBytes > 0)
-									if (numBytes >117)
-										bufferedFileOutputStream.write(block, 0, 117);
-									else
+									if (numBytes >128){
+										bufferedFileOutputStream.write(block, 0, 128);
+										System.out.println(new String(block, 0, 128));
+									}
+									else{
 										bufferedFileOutputStream.write(block, 0, numBytes);
+										System.out.println(new String(block, 0, numBytes));
+									}
 								
 								if (numBytes <= 117) {
 	
